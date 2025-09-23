@@ -10,6 +10,32 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+class ShareSummaryView(discord.ui.View):
+    def __init__(self, summary_embed: discord.Embed, channel: discord.TextChannel):
+        super().__init__(timeout=300)  # 5 minute timeout
+        self.summary_embed = summary_embed
+        self.channel = channel
+
+    @discord.ui.button(label='Share to Channel', style=discord.ButtonStyle.primary, emoji='📤')
+    async def share_summary(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            # Send the summary to the original channel
+            await self.channel.send(embed=self.summary_embed)
+
+            # Update the private message to show it was shared
+            embed = discord.Embed(
+                title="✅ Summary Shared!",
+                description="Your summary has been posted to the channel.",
+                color=0x00ff00
+            )
+
+            # Disable the button
+            button.disabled = True
+            await interaction.response.edit_message(embed=embed, view=self)
+
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Failed to share summary: {str(e)}", ephemeral=True)
+
 class SummariserBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
@@ -34,7 +60,7 @@ bot = SummariserBot()
     messages="Number of messages to summarise (default: 10, max: 100)"
 )
 async def summarise(interaction: discord.Interaction, messages: Optional[int] = 10):
-    await interaction.response.defer()
+    await interaction.response.defer(ephemeral=True)
 
     # Validate message count
     if messages < 1:
@@ -80,12 +106,16 @@ Summary:"""
             description=summary,
             color=0x00ff00
         )
-        embed.set_footer(text="Powered by Google Gemini")
+        embed.set_footer(text=f"Powered by Google Gemini • Summarised by {interaction.user.display_name}")
 
-        await interaction.followup.send(embed=embed)
+        # Create the view with the share button
+        view = ShareSummaryView(embed, interaction.channel)
+
+        # Send the summary privately (ephemeral)
+        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
     except Exception as e:
-        await interaction.followup.send(f"❌ An error occurred while generating the summary: {str(e)}")
+        await interaction.followup.send(f"❌ An error occurred while generating the summary: {str(e)}", ephemeral=True)
 
 if __name__ == "__main__":
     token = os.getenv('DISCORD_TOKEN')
