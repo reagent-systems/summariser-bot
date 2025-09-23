@@ -57,7 +57,7 @@ bot = SummariserBot()
 
 @bot.tree.command(name="summarise", description="Summarise recent messages in the current channel")
 @app_commands.describe(
-    messages="Number of messages to summarise (default: 10, max: 100)"
+    messages="Number of messages to summarise (default: 10, max: 500)"
 )
 async def summarise(interaction: discord.Interaction, messages: Optional[int] = 10):
     await interaction.response.defer(ephemeral=True)
@@ -65,8 +65,8 @@ async def summarise(interaction: discord.Interaction, messages: Optional[int] = 
     # Validate message count
     if messages < 1:
         messages = 1
-    elif messages > 100:
-        messages = 100
+    elif messages > 500:
+        messages = 500
 
     try:
         # Fetch messages from the channel
