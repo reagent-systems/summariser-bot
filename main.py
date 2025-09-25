@@ -44,7 +44,7 @@ class SummariserBot(commands.Bot):
 
         # Configure Gemini
         genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
 
     async def setup_hook(self):
         await self.tree.sync()
